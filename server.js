@@ -1,19 +1,17 @@
-require('dotenv').config(); // Permet de lire les variables d'environnement depuis un fichier .env (utile en local)
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Ne jamais mettre la clé en dur
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // clé Stripe dans variables env Render
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Servir les fichiers statiques (index.html, success.html, cancel.html, etc.)
+// Servir les fichiers statiques dans le dossier courant (index.html, etc.)
 app.use(express.static(path.join(__dirname)));
 
-// Création de session Stripe
+// Route POST pour créer une session de paiement Stripe
 app.post('/create-checkout-session', async (req, res) => {
   const panier = req.body.panier;
 
@@ -44,7 +42,7 @@ app.post('/create-checkout-session', async (req, res) => {
         product_data: {
           name: pizza.nom + supplementsText,
         },
-        unit_amount: Math.round(totalPrice * 100),
+        unit_amount: Math.round(totalPrice * 100), // en centimes
       },
       quantity: 1,
     };
@@ -55,8 +53,8 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      success_url: 'https://ton-site.com/success.html?session_id={CHECKOUT_SESSION_ID}', // ← à adapter à ton vrai domaine
-      cancel_url: 'https://ton-site.com/cancel.html', // ← pareil ici
+      success_url: `${process.env.FRONTEND_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`, // URL front à mettre en env
+      cancel_url: `${process.env.FRONTEND_URL}/cancel.html`,
     });
 
     res.json({ id: session.id });
@@ -66,13 +64,12 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Récupérer la session avec ses line items
+// Route GET pour récupérer les détails d'une session
 app.get('/api/session/:id', async (req, res) => {
   const sessionId = req.params.id;
 
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
       limit: 100,
       expand: ['data.price.product']
@@ -86,9 +83,8 @@ app.get('/api/session/:id', async (req, res) => {
   }
 });
 
-// ✅ Corrigé ici : Render impose d’utiliser process.env.PORT
+// Utiliser le port défini par Render ou 3000 en local
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`✅ Serveur démarré sur le port ${PORT}`);
 });
