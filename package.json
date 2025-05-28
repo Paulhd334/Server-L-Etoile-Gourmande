@@ -1,18 +1,11 @@
 {
   "name": "letoile_gourmande",
   "version": "1.0.0",
-  "description": "Serveur Node.js pour L'étoile Gourmande - avec Express, CORS, et Stripe.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "commonjs",
-  "engines": {
-    "node": "18.x"
-  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
