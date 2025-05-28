@@ -1,7 +1,9 @@
+require('dotenv').config(); // Permet de lire les variables d'environnement depuis un fichier .env (utile en local)
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const stripe = require('stripe')('sk_test_51RTMhuLFHVbWJugPsyZ1UBCcjWCN7jtbEiQf5va3m8TDcPJe7tLkr752svp4vkQaizOnGmCDnkpcICmDIghnRpq000gTPPtaKB');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Ne jamais mettre la clé en dur
 
 const app = express();
 
@@ -53,8 +55,8 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      success_url: 'http://localhost:3000/success.html?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://localhost:3000/cancel.html',
+      success_url: 'https://ton-site.com/success.html?session_id={CHECKOUT_SESSION_ID}', // ← à adapter à ton vrai domaine
+      cancel_url: 'https://ton-site.com/cancel.html', // ← pareil ici
     });
 
     res.json({ id: session.id });
@@ -76,9 +78,7 @@ app.get('/api/session/:id', async (req, res) => {
       expand: ['data.price.product']
     });
 
-    // Ajouter les line_items à la session pour la réponse
     session.line_items = lineItems;
-
     res.json(session);
   } catch (err) {
     console.error('Erreur récupération session:', err);
@@ -86,7 +86,9 @@ app.get('/api/session/:id', async (req, res) => {
   }
 });
 
-// Démarrer le serveur
-app.listen(3000, () => {
-  console.log('✅ Serveur démarré sur http://localhost:3000');
+// ✅ Corrigé ici : Render impose d’utiliser process.env.PORT
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });
